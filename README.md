@@ -36,8 +36,17 @@ A beginner-friendly Camera Kit Web application built with Vite and TypeScript.
    ```
 
 6. **View your app:**
-   - Open your browser and navigate to `http://localhost:5173/`
-   - Accept the camera permissions prompt
+   - **On your computer:** Open your browser and navigate to `https://localhost:5173/`
+     - You'll see a security warning about the self-signed certificate - click "Advanced" and "Proceed to localhost" (this is safe for development)
+   - **On your mobile device:**
+     1. Make sure your phone is on the same Wi-Fi network as your computer
+     2. Find your computer's local IP address:
+        - Windows: Run `ipconfig` in Command Prompt and look for "IPv4 Address"
+        - Example: `192.168.1.100`
+     3. Open your mobile browser and navigate to `https://YOUR_IP_ADDRESS:5173/`
+        - Example: `https://192.168.1.100:5173/`
+     4. Accept the security warning about the self-signed certificate
+     5. Accept the camera permissions prompt
    - You should see your webcam with the Lens applied!
 
 ## Project Structure
