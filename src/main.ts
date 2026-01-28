@@ -1,42 +1,122 @@
 import { bootstrapCameraKit, createMediaStreamSource } from '@snap/camera-kit';
 
-(async function () {
-  const cameraKit = await bootstrapCameraKit({
-    apiToken: 'eyJhbGciOiJIUzI1NiIsImtpZCI6IkNhbnZhc1MyU0hNQUNQcm9kIiwidHlwIjoiSldUIn0.eyJhdWQiOiJjYW52YXMtY2FudmFzYXBpIiwiaXNzIjoiY2FudmFzLXMyc3Rva2VuIiwibmJmIjoxNzY1NDQxNTI5LCJzdWIiOiIzZjNkNGI4ZC0wNGRlLTRkMTQtYTQ1Ni1iMzVjZTkwZDRlNTh-U1RBR0lOR34wOTJiZmQ2Ny1hNGVhLTRmMDQtYTNkYS1jZGM4MmNjZGE5YTkifQ.MqrGTmxVteuROEdOPt6vKkEuxahGdCLUOalnGEcB8hs',
-  });
-  const liveRenderTarget = document.getElementById(
-    'canvas'
-  ) as HTMLCanvasElement;
-  const session = await cameraKit.createSession({ liveRenderTarget });
+// Helper function to display error messages
+function showError(message: string) {
+  const errorDiv = document.createElement('div');
+  errorDiv.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #ff4444; color: white; padding: 15px 20px; border-radius: 8px; z-index: 10000; font-family: Arial, sans-serif; max-width: 80%; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);';
+  errorDiv.textContent = message;
+  document.body.appendChild(errorDiv);
   
-  // Request access to the back-facing camera
-  const mediaStream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: 'environment' },
-  });
+  // Remove error after 10 seconds
+  setTimeout(() => {
+    errorDiv.remove();
+  }, 10000);
+}
 
-  // Create a media stream source with cameraType set to 'environment' for back camera
-  const source = createMediaStreamSource(mediaStream, {
-    cameraType: 'environment',
-  });
+// Helper function to check if getUserMedia is available
+function checkCameraSupport(): boolean {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showError('Camera access is not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari.');
+    console.error('getUserMedia is not supported');
+    return false;
+  }
+  return true;
+}
 
-  await session.setSource(source);
-  await session.play();
-
+(async function () {
   try {
-    const lens = await cameraKit.lensRepository.loadLens(
-      '4783cf00-4f42-420e-a822-1202ee9ec8c2',
-      '0d9e6d69-838d-4aa2-b232-645c0880f09b'
-    );
+    // Check camera support first
+    if (!checkCameraSupport()) {
+      return;
+    }
 
-    await session.applyLens(lens);
-    console.log('Lens applied successfully');
+    console.log('Initializing Camera Kit...');
+    const cameraKit = await bootstrapCameraKit({
+      apiToken: 'eyJhbGciOiJIUzI1NiIsImtpZCI6IkNhbnZhc1MyU0hNQUNQcm9kIiwidHlwIjoiSldUIn0.eyJhdWQiOiJjYW52YXMtY2FudmFzYXBpIiwiaXNzIjoiY2FudmFzLXMyc3Rva2VuIiwibmJmIjoxNzY1NDQxNTI5LCJzdWIiOiIzZjNkNGI4ZC0wNGRlLTRkMTQtYTQ1Ni1iMzVjZTkwZDRlNTh-U1RBR0lOR34wOTJiZmQ2Ny1hNGVhLTRmMDQtYTNkYS1jZGM4MmNjZGE5YTkifQ.MqrGTmxVteuROEdOPt6vKkEuxahGdCLUOalnGEcB8hs',
+    });
+    
+    const liveRenderTarget = document.getElementById(
+      'canvas'
+    ) as HTMLCanvasElement;
+    
+    if (!liveRenderTarget) {
+      showError('Canvas element not found. Please ensure a canvas with id="canvas" exists.');
+      console.error('Canvas element not found');
+      return;
+    }
+
+    console.log('Creating Camera Kit session...');
+    const session = await cameraKit.createSession({ liveRenderTarget });
+    
+    // Request access to the back-facing camera with error handling
+    let mediaStream: MediaStream | null = null;
+    try {
+      console.log('Requesting camera access (back camera)...');
+      mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+      });
+      console.log('Camera access granted');
+    } catch (cameraError: any) {
+      console.error('Failed to access back camera:', cameraError);
+      
+      // Try front camera as fallback
+      try {
+        console.log('Trying front camera as fallback...');
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user' },
+        });
+        console.log('Front camera access granted');
+      } catch (frontCameraError: any) {
+        console.error('Failed to access front camera:', frontCameraError);
+        
+        // Provide specific error messages
+        if (cameraError.name === 'NotAllowedError' || frontCameraError.name === 'NotAllowedError') {
+          showError('Camera permission denied. Please allow camera access in your browser settings and refresh the page.');
+        } else if (cameraError.name === 'NotFoundError' || frontCameraError.name === 'NotFoundError') {
+          showError('No camera found. Please ensure a camera is connected to your device.');
+        } else if (cameraError.name === 'NotReadableError' || frontCameraError.name === 'NotReadableError') {
+          showError('Camera is already in use by another application. Please close other apps using the camera.');
+        } else {
+          showError(`Camera access failed: ${cameraError.message || 'Unknown error'}. Please check your browser settings.`);
+        }
+        return;
+      }
+    }
+
+    if (!mediaStream) {
+      showError('Failed to get camera stream. Please try refreshing the page.');
+      console.error('MediaStream is null');
+      return;
+    }
+
+    // Create a media stream source
+    console.log('Creating media stream source...');
+    const source = createMediaStreamSource(mediaStream, {
+      cameraType: mediaStream.getVideoTracks()[0]?.getSettings().facingMode === 'environment' ? 'environment' : 'user',
+    });
+
+    console.log('Setting camera source and starting playback...');
+    await session.setSource(source);
+    await session.play();
+    console.log('Camera feed started successfully');
+
+    // Load and apply lens
+    try {
+      console.log('Loading lens...');
+      const lens = await cameraKit.lensRepository.loadLens(
+        '4783cf00-4f42-420e-a822-1202ee9ec8c2',
+        '0d9e6d69-838d-4aa2-b232-645c0880f09b'
+      );
+
+      await session.applyLens(lens);
+      console.log('Lens applied successfully');
+    } catch (error) {
+      console.error('Failed to load or apply lens:', error);
+      showError(`Lens failed to load: ${error instanceof Error ? error.message : 'Unknown error'}. Please check the lens ID and group ID.`);
+    }
   } catch (error) {
-    console.error('Failed to load or apply lens:', error);
-    // Display error to user
-    const errorDiv = document.createElement('div');
-    errorDiv.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #ff4444; color: white; padding: 15px 20px; border-radius: 8px; z-index: 10000; font-family: Arial, sans-serif; max-width: 80%; text-align: center;';
-    errorDiv.textContent = `Lens failed to load: ${error instanceof Error ? error.message : 'Unknown error'}. Please check the lens ID and group ID.`;
-    document.body.appendChild(errorDiv);
+    console.error('Fatal error during initialization:', error);
+    showError(`Failed to initialize camera: ${error instanceof Error ? error.message : 'Unknown error'}. Please refresh the page.`);
   }
 })();
 
