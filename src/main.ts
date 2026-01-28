@@ -102,6 +102,33 @@ function showError(message: string) {
     await session.play();
     console.log('Camera feed started successfully');
 
+    // Adjust canvas size to fill screen while maintaining camera aspect ratio (cover mode)
+    const adjustCanvasSize = () => {
+      const videoTrack = mediaStream.getVideoTracks()[0];
+      if (videoTrack) {
+        const settings = videoTrack.getSettings();
+        const videoWidth = settings.width || 1280;
+        const videoHeight = settings.height || 720;
+        const videoAspectRatio = videoWidth / videoHeight;
+        const viewportAspectRatio = window.innerWidth / window.innerHeight;
+
+        // Cover mode: fill entire viewport while maintaining aspect ratio
+        if (videoAspectRatio > viewportAspectRatio) {
+          // Video is wider than viewport - fill height, width may extend beyond
+          liveRenderTarget.style.height = '100vh';
+          liveRenderTarget.style.width = `${100 * videoAspectRatio}vh`;
+        } else {
+          // Video is taller than viewport - fill width, height may extend beyond
+          liveRenderTarget.style.width = '100vw';
+          liveRenderTarget.style.height = `${100 / videoAspectRatio}vw`;
+        }
+      }
+    };
+
+    // Adjust canvas size initially and on window resize
+    adjustCanvasSize();
+    window.addEventListener('resize', adjustCanvasSize);
+
     // Load and apply lens
     try {
       console.log('Loading lens...');
