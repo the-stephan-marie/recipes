@@ -43,10 +43,13 @@
         transform: translate(-50%, -50%);
         z-index: 1001;
         display: block;
-        max-width: 70%;
+        width: 80%;
+        max-width: 80%;
         max-height: 18vh;
         cursor: pointer;
         text-decoration: none;
+        margin: 0;
+        padding: 0;
       }
 
       #link-button img {
@@ -56,28 +59,33 @@
         max-height: 100%;
         object-fit: contain;
         display: block;
+        margin: 0;
+        padding: 0;
       }
 
       #record-button {
         position: absolute;
-        bottom: 30px;
+        top: calc(83.33% - 9vh - 0.75px - 65px); /* Position above link-button: link-button center (83.33%) - half link-button height (9vh) - padding (0.75px) - full record-button height (65px) */
         left: 50%;
         transform: translateX(-50%);
         z-index: 1002;
-        width: 92px;
-        height: 92px;
+        max-height: 65px;
+        width: auto; /* Maintain aspect ratio */
+        height: 65px;
         background: transparent;
         border: none;
         cursor: pointer;
         padding: 0;
+        margin: 0;
         display: flex;
         align-items: center;
         justify-content: center;
       }
 
       #record-button img {
-        width: 100%;
+        width: auto;
         height: 100%;
+        max-height: 65px;
         object-fit: contain;
         transition: filter 0.2s ease;
       }
@@ -93,14 +101,15 @@
         }
 
         #link-button {
-          max-width: 75%;
+          width: 80%;
+          max-width: 80%;
           max-height: 16vh;
         }
 
         #record-button {
-          width: 80px;
-          height: 80px;
-          bottom: 25px;
+          top: calc(83.33% - 8vh - 0.75px - 55px); /* Adjusted for 16vh link-button, 95% reduced padding */
+          max-height: 55px;
+          height: 55px;
         }
       }
 
@@ -110,14 +119,15 @@
         }
 
         #link-button {
+          width: 80%;
           max-width: 80%;
           max-height: 14vh;
         }
 
         #record-button {
-          width: 70px;
-          height: 70px;
-          bottom: 20px;
+          top: calc(83.33% - 7vh - 0.75px - 50px); /* Adjusted for 14vh link-button and smaller button, 95% reduced padding */
+          max-height: 50px;
+          height: 50px;
         }
       }
 
@@ -127,13 +137,15 @@
         }
 
         #link-button {
-          max-width: 420px;
+          width: 80%;
+          max-width: 80%;
           max-height: 130px;
         }
 
         #record-button {
-          width: 92px;
-          height: 92px;
+          top: calc(83.33% - 65px - 0.75px - 65px); /* Adjusted for fixed 130px link-button (half is 65px), 95% reduced padding */
+          max-height: 65px;
+          height: 65px;
         }
       }
     </style>
