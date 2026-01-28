@@ -114,6 +114,50 @@ function checkCameraSupport(): boolean {
       console.error('Failed to load or apply lens:', error);
       showError(`Lens failed to load: ${error instanceof Error ? error.message : 'Unknown error'}. Please check the lens ID and group ID.`);
     }
+
+    // Setup recording functionality
+    const recordButton = document.getElementById('record-button') as HTMLButtonElement;
+    let isRecording = false;
+
+    if (recordButton) {
+      recordButton.addEventListener('click', async () => {
+        try {
+          if (!isRecording) {
+            // Start recording
+            console.log('Starting recording...');
+            await session.startRecording();
+            isRecording = true;
+            recordButton.classList.add('recording');
+            console.log('Recording started');
+          } else {
+            // Stop recording
+            console.log('Stopping recording...');
+            const videoBlob = await session.stopRecording();
+            isRecording = false;
+            recordButton.classList.remove('recording');
+            console.log('Recording stopped');
+
+            // Download the video
+            if (videoBlob) {
+              const url = URL.createObjectURL(videoBlob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `nescafe-recording-${Date.now()}.mp4`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              console.log('Video downloaded');
+            }
+          }
+        } catch (error) {
+          console.error('Recording error:', error);
+          showError(`Recording failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          isRecording = false;
+          recordButton.classList.remove('recording');
+        }
+      });
+    }
   } catch (error) {
     console.error('Fatal error during initialization:', error);
     showError(`Failed to initialize camera: ${error instanceof Error ? error.message : 'Unknown error'}. Please refresh the page.`);
