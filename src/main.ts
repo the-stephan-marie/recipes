@@ -115,46 +115,81 @@ function checkCameraSupport(): boolean {
       showError(`Lens failed to load: ${error instanceof Error ? error.message : 'Unknown error'}. Please check the lens ID and group ID.`);
     }
 
-    // Setup recording functionality
+    // Setup recording functionality using MediaRecorder API
     const recordButton = document.getElementById('record-button') as HTMLButtonElement;
     let isRecording = false;
+    let mediaRecorder: MediaRecorder | null = null;
+    let recordedChunks: Blob[] = [];
 
     if (recordButton) {
       recordButton.addEventListener('click', async () => {
         try {
           if (!isRecording) {
-            // Start recording
+            // Start recording using MediaRecorder API
             console.log('Starting recording...');
-            await session.startRecording();
+            
+            // Get the canvas stream
+            const canvasStream = liveRenderTarget.captureStream(30); // 30 FPS
+            
+            // Create MediaRecorder
+            const options: MediaRecorderOptions = {
+              mimeType: 'video/webm;codecs=vp9',
+            };
+            
+            // Fallback to VP8 if VP9 is not supported
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+              options.mimeType = 'video/webm;codecs=vp8';
+            }
+            
+            // Fallback to default if VP8 is not supported
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+              options.mimeType = 'video/webm';
+            }
+            
+            mediaRecorder = new MediaRecorder(canvasStream, options);
+            recordedChunks = [];
+            
+            mediaRecorder.ondataavailable = (event) => {
+              if (event.data && event.data.size > 0) {
+                recordedChunks.push(event.data);
+              }
+            };
+            
+            mediaRecorder.onstop = () => {
+              const blob = new Blob(recordedChunks, { type: 'video/webm' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `nescafe-recording-${Date.now()}.webm`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              console.log('Video downloaded');
+            };
+            
+            mediaRecorder.start();
             isRecording = true;
             recordButton.classList.add('recording');
             console.log('Recording started');
           } else {
             // Stop recording
             console.log('Stopping recording...');
-            const videoBlob = await session.stopRecording();
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+              mediaRecorder.stop();
+            }
             isRecording = false;
             recordButton.classList.remove('recording');
             console.log('Recording stopped');
-
-            // Download the video
-            if (videoBlob) {
-              const url = URL.createObjectURL(videoBlob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `nescafe-recording-${Date.now()}.mp4`;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              URL.revokeObjectURL(url);
-              console.log('Video downloaded');
-            }
           }
         } catch (error) {
           console.error('Recording error:', error);
           showError(`Recording failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
           isRecording = false;
           recordButton.classList.remove('recording');
+          if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+          }
         }
       });
     }
