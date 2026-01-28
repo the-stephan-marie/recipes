@@ -107,6 +107,27 @@
         filter: brightness(0) saturate(100%) invert(27%) sepia(100%) saturate(7471%) hue-rotate(348deg) brightness(95%) contrast(118%);
       }
 
+      #powersnap {
+        position: fixed;
+        bottom: 35px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1003;
+        width: calc(100% - 40px); /* Full width minus 20px padding on each side */
+        max-width: calc(100vw - 40px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none; /* Allow taps to pass through */
+      }
+
+      #powersnap img {
+        width: auto;
+        height: auto;
+        max-width: 100%;
+        display: block;
+      }
+
       /* Responsive adjustments */
       @media (max-width: 768px) {
         #logo {
@@ -178,6 +199,9 @@
     </button>
     <div id="canvas-container">
       <canvas id="canvas"></canvas>
+    </div>
+    <div id="powersnap">
+      <img src="powersnap.svg" alt="Powered by Snap" />
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
