@@ -39,7 +39,7 @@
 
       #logo {
         position: absolute;
-        top: 12.5%; /* Center of upper 1/4 (25% / 2 = 12.5%) */
+        top: max(85px, 12.5%); /* At least 60px from top (85px = 60px margin + 25px half logo height), or 12.5% on larger screens */
         left: 50%;
         transform: translate(-50%, -50%);
         z-index: 1000;
@@ -132,6 +132,7 @@
       @media (max-width: 768px) {
         #logo {
           height: 45px; /* Scale down for tablets */
+          top: max(82.5px, 12.5%); /* At least 60px from top (82.5px = 60px margin + 22.5px half logo height) */
         }
 
         #link-button {
@@ -150,6 +151,7 @@
       @media (max-width: 480px) {
         #logo {
           height: 40px; /* Scale down for mobile */
+          top: max(80px, 12.5%); /* At least 60px from top (80px = 60px margin + 20px half logo height) */
         }
 
         #link-button {
