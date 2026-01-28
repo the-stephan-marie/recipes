@@ -1,13 +1,12 @@
 import { defineConfig } from 'vite';
-import basicSsl from '@vitejs/plugin-basic-ssl';
 
 export default defineConfig({
   base: '/recipes/', // GitHub Pages project path
-  plugins: [basicSsl()],
   server: {
     host: '0.0.0.0', // Listen on all network interfaces for mobile access
     port: 5173,
-    https: true, // Enable HTTPS for camera features
+    // Note: HTTPS is provided by GitHub Pages in production
+    // For local dev, you may need to use a proxy or serve over HTTPS manually
   },
   build: {
     outDir: 'dist',
