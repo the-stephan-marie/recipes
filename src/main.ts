@@ -131,20 +131,23 @@ function checkCameraSupport(): boolean {
             // Get the canvas stream
             const canvasStream = liveRenderTarget.captureStream(30); // 30 FPS
             
-            // Create MediaRecorder
-            const options: MediaRecorderOptions = {
-              mimeType: 'video/webm;codecs=vp9',
-            };
+            // Determine the best supported MIME type
+            let mimeType = 'video/webm;codecs=vp9';
             
             // Fallback to VP8 if VP9 is not supported
-            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-              options.mimeType = 'video/webm;codecs=vp8';
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+              mimeType = 'video/webm;codecs=vp8';
             }
             
             // Fallback to default if VP8 is not supported
-            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-              options.mimeType = 'video/webm';
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+              mimeType = 'video/webm';
             }
+            
+            // Create MediaRecorder with the determined MIME type
+            const options: MediaRecorderOptions = {
+              mimeType: mimeType,
+            };
             
             mediaRecorder = new MediaRecorder(canvasStream, options);
             recordedChunks = [];
