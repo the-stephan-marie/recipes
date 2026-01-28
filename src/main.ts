@@ -160,18 +160,63 @@ function showError(message: string) {
             // Get the canvas stream
             const canvasStream = liveRenderTarget.captureStream(30); // 30 FPS
             
+            // Detect iOS devices
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            
             // Determine the best supported MIME type
-            let mimeType = 'video/webm;codecs=vp9';
+            let mimeType = '';
+            let fileExtension = 'webm';
+            let blobType = 'video/webm';
             
-            // Fallback to VP8 if VP9 is not supported
-            if (!MediaRecorder.isTypeSupported(mimeType)) {
-              mimeType = 'video/webm;codecs=vp8';
+            if (isIOS) {
+              // iOS Safari supports MP4/H.264
+              const iosTypes = [
+                'video/mp4;codecs=h264',
+                'video/mp4',
+                'video/quicktime'
+              ];
+              
+              for (const type of iosTypes) {
+                if (MediaRecorder.isTypeSupported(type)) {
+                  mimeType = type;
+                  fileExtension = 'mp4';
+                  blobType = type.includes('quicktime') ? 'video/quicktime' : 'video/mp4';
+                  break;
+                }
+              }
+              
+              // If no iOS type is supported, try WebM as fallback
+              if (!mimeType) {
+                if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+                  mimeType = 'video/webm;codecs=vp9';
+                } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+                  mimeType = 'video/webm;codecs=vp8';
+                } else if (MediaRecorder.isTypeSupported('video/webm')) {
+                  mimeType = 'video/webm';
+                }
+              }
+            } else {
+              // Android and desktop browsers - prefer WebM
+              if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+                mimeType = 'video/webm;codecs=vp9';
+              } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+                mimeType = 'video/webm;codecs=vp8';
+              } else if (MediaRecorder.isTypeSupported('video/webm')) {
+                mimeType = 'video/webm';
+              } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+                // Fallback to MP4 if WebM is not supported
+                mimeType = 'video/mp4';
+                fileExtension = 'mp4';
+                blobType = 'video/mp4';
+              }
             }
             
-            // Fallback to default if VP8 is not supported
-            if (!MediaRecorder.isTypeSupported(mimeType)) {
-              mimeType = 'video/webm';
+            if (!mimeType) {
+              throw new Error('No supported video format found. Your browser may not support video recording.');
             }
+            
+            console.log('Using MIME type:', mimeType);
             
             // Create MediaRecorder with the determined MIME type
             const options: MediaRecorderOptions = {
@@ -188,11 +233,11 @@ function showError(message: string) {
             };
             
             mediaRecorder.onstop = () => {
-              const blob = new Blob(recordedChunks, { type: 'video/webm' });
+              const blob = new Blob(recordedChunks, { type: blobType });
               const url = URL.createObjectURL(blob);
               const a = document.createElement('a');
               a.href = url;
-              a.download = `nescafe-recording-${Date.now()}.webm`;
+              a.download = `nescafe-recording-${Date.now()}.${fileExtension}`;
               document.body.appendChild(a);
               a.click();
               document.body.removeChild(a);
