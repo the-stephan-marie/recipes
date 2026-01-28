@@ -13,40 +13,6 @@ function showError(message: string) {
   }, 10000);
 }
 
-// Helper function to check if getUserMedia is available
-function checkCameraSupport(): boolean {
-  console.log('Checking camera support...');
-  console.log('navigator.mediaDevices:', navigator.mediaDevices);
-  console.log('User agent:', navigator.userAgent);
-  console.log('Protocol:', window.location.protocol);
-  console.log('Hostname:', window.location.hostname);
-  
-  // Check for modern MediaDevices API
-  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    console.log('Modern MediaDevices API detected');
-    return true;
-  }
-  
-  // Check for legacy getUserMedia (some older browsers)
-  if ((navigator as any).getUserMedia || (navigator as any).webkitGetUserMedia || (navigator as any).mozGetUserMedia) {
-    console.warn('Legacy getUserMedia detected, but MediaDevices API is preferred');
-    return true;
-  }
-  
-  // Check if we're on HTTPS or localhost (required for camera access on mobile)
-  const isSecure = window.location.protocol === 'https:' || 
-                   window.location.hostname === 'localhost' || 
-                   window.location.hostname === '127.0.0.1';
-  
-  if (!isSecure) {
-    console.error('Camera access requires secure context (HTTPS)');
-    return false;
-  }
-  
-  console.error('getUserMedia is not supported - navigator.mediaDevices:', navigator.mediaDevices);
-  return false;
-}
-
 (async function () {
   try {
     // Log environment info for debugging
